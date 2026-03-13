@@ -239,12 +239,12 @@ async def run():
                     for p in projects:
                         pid = str(p.get("id"))
                         if not await redis.sismember("fr:seen_ids", pid):
-                            await redis.sadd("fr:seen_ids", pid)
-                            await redis.expire("fr:seen_ids", 86400 * 7)
                             if matches_filter(p):
                                 new_total += 1
                                 await save_project(pg, p)
                                 new_projects.append(p)
+                            await redis.sadd("fr:seen_ids", pid)
+                            await redis.expire("fr:seen_ids", 86400 * 7)
                     if new_projects:
                         await send_telegram(http, f"📋 <b>Новых заказов: {len(new_projects)}</b>")
                         for p in new_projects:
