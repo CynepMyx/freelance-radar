@@ -1,0 +1,5 @@
+app.env
+.env
+kwork_token.json
+__pycache__/
+*.pyc
