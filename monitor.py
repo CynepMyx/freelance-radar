@@ -192,8 +192,7 @@ async def bot_listener(http: httpx.AsyncClient):
                     await send_telegram(http, "📋 Скоринг выключен — приходят все заказы")
                 elif text == "/status":
                     state = "⏸ на паузе" if paused else "✅ активен"
-                    score_state = "🎯 включён" if scoring_enabled else "📋 выключен"
-                    await send_telegram(http, f"Статус: {state}\nСкоринг: {score_state} (порог {SCORE_THRESHOLD})\nИнтервал: {POLL_INTERVAL}с\nКатегории: {PARENT_CATEGORY_IDS}")
+                    await send_telegram(http, f"Статус: {state}\nИнтервал: {POLL_INTERVAL}с\nКатегории: {PARENT_CATEGORY_IDS}")
         except Exception as e:
             log.error("Bot listener error: %s", e)
             await asyncio.sleep(5)
