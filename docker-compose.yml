@@ -4,9 +4,12 @@ services:
     container_name: freelance-radar
     restart: unless-stopped
     env_file: app.env
-    network_mode: bridge
+    networks:
+      - fr-net
     volumes:
       - ./kwork_token.json:/app/.kwork_token.json
+    depends_on:
+      - fr-postgres
 
   fr-postgres:
     image: postgres:16-alpine
@@ -19,9 +22,14 @@ services:
     volumes:
       - fr-postgres-data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    network_mode: bridge
+    networks:
+      - fr-net
     ports:
       - "127.0.0.1:5433:5432"
+
+networks:
+  fr-net:
+    driver: bridge
 
 volumes:
   fr-postgres-data:

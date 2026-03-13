@@ -24,7 +24,7 @@ PARENT_CATEGORY_IDS = {int(x) for x in os.environ.get("PARENT_CATEGORY_IDS", "11
 EXCLUDE_CATEGORY_IDS = {int(x) for x in os.environ.get("EXCLUDE_CATEGORY_IDS", "").split(",") if x.strip()}
 
 KWORK_URL = "https://kwork.ru/projects/{id}"
-PG_DSN = os.environ.get("PG_DSN", "postgresql://fr_user:fr_pass_2026@172.17.0.1:5433/freelance_radar")
+PG_DSN = os.environ.get("PG_DSN", "postgresql://fr_user:fr_pass_2026@fr-postgres:5432/freelance_radar")
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 SCORE_THRESHOLD = int(os.environ.get("SCORE_THRESHOLD", "60"))
 
