@@ -128,11 +128,19 @@ def format_project(p: dict, score: int | None = None, reason: str = "") -> str:
     budget = f"до {price} ₽"
     if price_max and price_max > price:
         budget += f" (до {price_max} ₽)"
-    score_line = f"🎯 Score: {score} — {reason}\n" if score is not None else ""
+    desc = p.get("description", "") or ""
+    import re
+    desc = re.sub(r"<[^>]+>", " ", desc).strip()
+    desc = re.sub(r"\s+", " ", desc)
+    if len(desc) > 300:
+        desc = desc[:300].rsplit(" ", 1)[0] + "…"
+    desc_line = f"\n📝 {desc}" if desc else ""
+    score_line = f"\n🎯 Score: {score} — {reason}" if score is not None else ""
     return (
         f"🆕 <b>{title}</b>\n"
-        f"💰 {budget}  |  📩 {offers}  |  ⏳ {hours_left}ч  |  🤝 {hired_pct}%\n"
-        f"{score_line}"
+        f"💰 {budget}  |  📩 {offers}  |  ⏳ {hours_left}ч  |  🤝 {hired_pct}%"
+        f"{desc_line}"
+        f"{score_line}\n"
         f"🔗 <a href='{url}'>Открыть на Kwork</a>"
     )
 
