@@ -132,8 +132,8 @@ def format_project(p: dict, score: int | None = None, reason: str = "") -> str:
     import re
     desc = re.sub(r"<[^>]+>", " ", desc).strip()
     desc = re.sub(r"\s+", " ", desc)
-    if len(desc) > 300:
-        desc = desc[:300].rsplit(" ", 1)[0] + "…"
+    if len(desc) > 3500:
+        desc = desc[:3500].rsplit(" ", 1)[0] + "…"
     desc_line = f"\n📝 {desc}" if desc else ""
     score_line = f"\n🎯 Score: {score} — {reason}" if score is not None else ""
     return (
