@@ -244,21 +244,14 @@ async def run():
                             await redis.expire("fr:seen_ids", 86400 * 7)
                             if matches_filter(p):
                                 new_total += 1
-                                if scoring_enabled:
-                                    score, reason = await score_project(
-                                        http, p.get("title", ""), p.get("description", "")
-                                    )
-                                    log.info("Scored: [%d] %s → %s", score, p.get("title", "")[:50], reason)
-                                else:
-                                    score, reason = None, ""
-                                await save_project(pg, p, score, reason)
-                                new_projects.append((p, score, reason))
+                                await save_project(pg, p)
+                                new_projects.append(p)
                     if new_projects:
                         await send_telegram(http, f"📋 <b>Новых заказов: {len(new_projects)}</b>")
-                        for p, score, reason in new_projects:
-                            await send_telegram(http, format_project(p, score, reason))
+                        for p in new_projects:
+                            await send_telegram(http, format_project(p))
                             await asyncio.sleep(0.3)
-                    log.info("Checked %d projects, %d new, %d passed score", len(projects), new_total, len(new_projects))
+                    log.info("Checked %d projects, %d new", len(projects), new_total)
                 except Exception as e:
                     log.error("Error: %s | type: %s", e, type(e).__name__, exc_info=True)
 
