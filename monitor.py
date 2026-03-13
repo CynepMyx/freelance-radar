@@ -244,8 +244,7 @@ async def run():
                                 else:
                                     score, reason = None, ""
                                 await save_project(pg, p, score, reason)
-                                if not scoring_enabled or score >= SCORE_THRESHOLD:
-                                    new_projects.append((p, score, reason))
+                                new_projects.append((p, score, reason))
                     if new_projects:
                         await send_telegram(http, f"📋 <b>Новых заказов: {len(new_projects)}</b>")
                         for p, score, reason in new_projects:
