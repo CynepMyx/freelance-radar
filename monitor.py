@@ -231,12 +231,22 @@ async def run():
         while True:
             if not paused:
                 try:
-                    projects = []
-                    for page in range(1, 4):
-                        projects.extend(await api.get_projects(page=page))
+                    all_projects = []
+                    for page in range(1, 11):
+                        page_projects = await api.get_projects(page=page)
+                        if not page_projects:
+                            break
+                        all_projects.extend(page_projects)
+                        all_known = all(
+                            await redis.sismember("fr:seen_ids", str(p.get("id")))
+                            for p in page_projects
+                        )
+                        if all_known:
+                            log.info("All known on page %d, stopping", page)
+                            break
                     new_projects = []
                     new_total = 0
-                    for p in projects:
+                    for p in all_projects:
                         pid = str(p.get("id"))
                         if not await redis.sismember("fr:seen_ids", pid):
                             if matches_filter(p):
@@ -250,7 +260,7 @@ async def run():
                         for p in new_projects:
                             await send_telegram(http, format_project(p))
                             await asyncio.sleep(0.3)
-                    log.info("Checked %d projects, %d new", len(projects), new_total)
+                    log.info("Checked %d projects, %d new", len(all_projects), new_total)
                 except Exception as e:
                     log.error("Error: %s | type: %s", e, type(e).__name__, exc_info=True)
 
