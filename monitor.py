@@ -237,10 +237,8 @@ async def run():
                         if not page_projects:
                             break
                         all_projects.extend(page_projects)
-                        all_known = all(
-                            await redis.sismember("fr:seen_ids", str(p.get("id")))
-                            for p in page_projects
-                        )
+                        results = [await redis.sismember("fr:seen_ids", str(p.get("id"))) for p in page_projects]
+                        all_known = all(results)
                         if all_known:
                             log.info("All known on page %d, stopping", page)
                             break
