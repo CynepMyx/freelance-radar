@@ -18,6 +18,7 @@ TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis-container:6379")
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", "120"))
+MIN_PAGES = int(os.environ.get("MIN_PAGES", "5"))
 KEYWORDS = [k.strip().lower() for k in os.environ.get("KEYWORDS", "").split(",") if k.strip()]
 
 PARENT_CATEGORY_IDS = {int(x) for x in os.environ.get("PARENT_CATEGORY_IDS", "11").split(",") if x.strip()}
@@ -239,7 +240,7 @@ async def run():
                         all_projects.extend(page_projects)
                         results = [await redis.sismember("fr:seen_ids", str(p.get("id"))) for p in page_projects]
                         all_known = all(results)
-                        if all_known:
+                        if all_known and page >= MIN_PAGES:
                             log.info("All known on page %d, stopping", page)
                             break
                     new_projects = []
