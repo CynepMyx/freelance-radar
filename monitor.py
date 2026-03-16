@@ -18,7 +18,7 @@ TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis-container:6379")
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", "120"))
-MIN_PAGES = int(os.environ.get("MIN_PAGES", "5"))
+MIN_PAGES = int(os.environ.get("MIN_PAGES", "3"))
 KEYWORDS = [k.strip().lower() for k in os.environ.get("KEYWORDS", "").split(",") if k.strip()]
 
 PARENT_CATEGORY_IDS = {int(x) for x in os.environ.get("PARENT_CATEGORY_IDS", "11").split(",") if x.strip()}
@@ -147,8 +147,6 @@ def format_project(p: dict, score: int | None = None, reason: str = "") -> str:
 
 
 def matches_filter(p: dict) -> bool:
-    if PARENT_CATEGORY_IDS and p.get("parent_category_id") not in PARENT_CATEGORY_IDS:
-        return False
     if EXCLUDE_CATEGORY_IDS and p.get("category_id") in EXCLUDE_CATEGORY_IDS:
         return False
     if KEYWORDS:
@@ -234,7 +232,7 @@ async def run():
                 try:
                     all_projects = []
                     for page in range(1, 11):
-                        page_projects = await api.get_projects(page=page)
+                        page_projects = await api.get_projects(categories=",".join(str(x) for x in PARENT_CATEGORY_IDS) if PARENT_CATEGORY_IDS else "", page=page)
                         if not page_projects:
                             break
                         all_projects.extend(page_projects)

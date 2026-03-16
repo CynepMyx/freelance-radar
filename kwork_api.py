@@ -221,10 +221,10 @@ class KworkApi:
 
     # ── Exchange ───────────────────────────────────────────────────────────
 
-    async def get_projects(self, category: str = "", page: int = 1, query: str = "") -> list[dict]:
+    async def get_projects(self, categories: str = "", page: int = 1, query: str = "") -> list[dict]:
         data = {}
-        if category:
-            data["c"] = category
+        if categories:
+            data["categories"] = categories
         if page > 1:
             data["page"] = str(page)
         if query:
