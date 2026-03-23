@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS projects (
     id            BIGINT PRIMARY KEY,
+    source        TEXT NOT NULL DEFAULT 'kwork',
     title         TEXT NOT NULL,
     description   TEXT,
     price         INTEGER,

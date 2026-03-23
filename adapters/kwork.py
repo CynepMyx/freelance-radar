@@ -23,8 +23,8 @@ class KworkApiError(KworkError):
 
 # ── Config ─────────────────────────────────────────────────────────────────
 
-ENV_FILE = Path(__file__).parent / ".env"
-TOKEN_FILE = Path(__file__).parent / ".kwork_token.json"
+ENV_FILE = Path("/app/app.env")
+TOKEN_FILE = Path("/app/data/kwork_token.json")
 
 API_BASE = "https://api.kwork.ru"
 BASIC_AUTH = ("mobile_api", "qFvfRl7w")  # Public mobile API credentials (same for all users)
@@ -285,3 +285,26 @@ class KworkApi:
 
     async def get_payment_methods(self) -> dict:
         return await self._post("getPaymentMethods")
+
+
+from project import Project
+
+
+def normalize_kwork_project(raw: dict) -> Project:
+    project_id = str(raw.get("id", ""))
+    return Project(
+        source="kwork",
+        project_id=project_id,
+        title=raw.get("title", "").strip(),
+        description=(raw.get("description") or "").strip(),
+        url=f"https://kwork.ru/projects/{project_id}",
+        price_from=raw.get("price"),
+        price_to=raw.get("possible_price_limit"),
+        category_id=raw.get("category_id"),
+        parent_category_id=raw.get("parent_category_id"),
+        client_username=raw.get("username"),
+        client_hired_percent=raw.get("user_hired_percent"),
+        offers=raw.get("offers") or 0,
+        time_left_seconds=raw.get("time_left"),
+        raw=raw,
+    )
