@@ -2,14 +2,12 @@
 import asyncio
 import logging
 import os
-import sys
 
 import asyncpg
 import httpx
 import redis.asyncio as aioredis
 
-sys.path.insert(0, os.path.dirname(__file__))
-from kwork_api import KworkApi
+from adapters.kwork import KworkApi
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 log = logging.getLogger("freelance-radar")
@@ -19,6 +17,7 @@ TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 REDIS_URL = os.environ.get("REDIS_URL", "redis://redis-container:6379")
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", "120"))
 MIN_PAGES = int(os.environ.get("MIN_PAGES", "3"))
+MIN_HIRED_PCT = int(os.environ.get("MIN_HIRED_PCT", "0"))
 KEYWORDS = [k.strip().lower() for k in os.environ.get("KEYWORDS", "").split(",") if k.strip()]
 
 PARENT_CATEGORY_IDS = {int(x) for x in os.environ.get("PARENT_CATEGORY_IDS", "11").split(",") if x.strip()}
@@ -149,6 +148,8 @@ def format_project(p: dict, score: int | None = None, reason: str = "") -> str:
 def matches_filter(p: dict) -> bool:
     if EXCLUDE_CATEGORY_IDS and p.get("category_id") in EXCLUDE_CATEGORY_IDS:
         return False
+    if MIN_HIRED_PCT and (p.get("user_hired_percent") or 0) < MIN_HIRED_PCT:
+        return False
     if KEYWORDS:
         text = (p.get("title", "") + " " + p.get("description", "")).lower()
         return any(kw in text for kw in KEYWORDS)
@@ -227,13 +228,31 @@ async def run():
 
         asyncio.create_task(bot_listener(http))
 
+        # Startup sweep: populate Redis with all current projects without sending notifications
+        log.info("Startup sweep: scanning all pages to populate Redis...")
+        cats_param = ",".join(str(x) for x in PARENT_CATEGORY_IDS) if PARENT_CATEGORY_IDS else ""
+        sweep_count = 0
+        for page in range(1, 100):
+            try:
+                page_projects = await api.get_projects(categories=cats_param, page=page)
+            except Exception as e:
+                log.warning("Startup sweep page %d error: %s", page, e)
+                break
+            if not page_projects or not isinstance(page_projects, list):
+                break
+            for p in page_projects:
+                await redis.sadd("fr:seen_ids", str(p.get("id")))
+            await redis.expire("fr:seen_ids", 86400 * 7)
+            sweep_count += len(page_projects)
+        log.info("Startup sweep complete: %d projects indexed", sweep_count)
+
         while True:
             if not paused:
                 try:
                     all_projects = []
                     for page in range(1, 11):
                         page_projects = await api.get_projects(categories=",".join(str(x) for x in PARENT_CATEGORY_IDS) if PARENT_CATEGORY_IDS else "", page=page)
-                        if not page_projects:
+                        if not page_projects or not isinstance(page_projects, list):
                             break
                         all_projects.extend(page_projects)
                         results = [await redis.sismember("fr:seen_ids", str(p.get("id"))) for p in page_projects]
