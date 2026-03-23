@@ -30,7 +30,7 @@ OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")
 SCORE_THRESHOLD = int(os.environ.get("SCORE_THRESHOLD", "60"))
 
 paused = False
-scoring_enabled = True
+scoring_enabled = bool(OPENROUTER_API_KEY)
 
 
 async def send_telegram(client: httpx.AsyncClient, text: str):
@@ -91,10 +91,13 @@ async def score_project(http: httpx.AsyncClient, title: str, description: str) -
             },
             timeout=20,
         )
-        import json as _json
+        import json as _json, re as _re
+        resp.raise_for_status()
         content = resp.json()["choices"][0]["message"]["content"].strip()
-        content = content.strip("```json").strip("```").strip()
-        data = _json.loads(content)
+        m = _re.search(r"\{.*?\}", content, _re.DOTALL)
+        if not m:
+            raise ValueError(f"No JSON object in response: {content[:100]}")
+        data = _json.loads(m.group())
         return int(data["score"]), data.get("reason", "")
     except Exception as e:
         log.warning("Score error: %s", e)
@@ -162,8 +165,11 @@ async def bot_listener(http: httpx.AsyncClient):
                     log.info("Monitoring resumed")
                     await send_telegram(http, "▶️ <b>Мониторинг возобновлён.</b>")
                 elif text == "/score_on":
-                    scoring_enabled = True
-                    await send_telegram(http, "🎯 Скоринг включён")
+                    if not OPENROUTER_API_KEY:
+                        await send_telegram(http, "⚠️ OpenRouter API key not configured")
+                    else:
+                        scoring_enabled = True
+                        await send_telegram(http, "🎯 Скоринг включён")
                 elif text == "/score_off":
                     scoring_enabled = False
                     await send_telegram(http, "📋 Скоринг выключен")

@@ -8,7 +8,7 @@ from pathlib import Path
 
 import httpx
 
-log = logging.getLogger("kwork-mcp")
+log = logging.getLogger("freelance-radar.kwork")
 
 # ── Exceptions ─────────────────────────────────────────────────────────────
 
