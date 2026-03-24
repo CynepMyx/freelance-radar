@@ -2,6 +2,7 @@
 import asyncio
 import logging
 import os
+import json
 import re
 
 import asyncpg
@@ -91,13 +92,13 @@ async def score_project(http: httpx.AsyncClient, title: str, description: str) -
             },
             timeout=20,
         )
-        import json as _json, re as _re
+
         resp.raise_for_status()
         content = resp.json()["choices"][0]["message"]["content"].strip()
-        m = _re.search(r"\{.*?\}", content, _re.DOTALL)
+        m = re.search(r"\{.*?\}", content, re.DOTALL)
         if not m:
             raise ValueError(f"No JSON object in response: {content[:100]}")
-        data = _json.loads(m.group())
+        data = json.loads(m.group())
         return int(data["score"]), data.get("reason", "")
     except Exception as e:
         log.warning("Score error: %s", e)

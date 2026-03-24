@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 import httpx
+from project import Project
 
 log = logging.getLogger("freelance-radar.kwork")
 
@@ -287,7 +288,6 @@ class KworkApi:
         return await self._post("getPaymentMethods")
 
 
-from project import Project
 
 
 def normalize_kwork_project(raw: dict) -> Project:
